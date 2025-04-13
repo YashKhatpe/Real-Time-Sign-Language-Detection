@@ -30,6 +30,7 @@ from itertools import chain
 
 import pickle
 import google.generativeai as genai
+from dotenv import load_dotenv
 load_dotenv("posts/nlp/.env", override=True)
 
 
@@ -41,7 +42,11 @@ parser.add_argument('-save_model', type=str)
 parser.add_argument('-root', type=str)
 
 args = parser.parse_args()
-genai.configure(api_key="AIzaSyDA4V5JD2syQVoj8Jija_Y2VJBDcjN3maw")
+
+load_dotenv()  # loads the .env file
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 
 def generate_sentence(predicted_words):
     """Takes a list of predicted words and generates a meaningful sentence using Gemini API"""

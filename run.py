@@ -44,7 +44,12 @@ args = parser.parse_args()
 
 import google.generativeai as genai
 import time
-genai.configure(api_key="AIzaSyDA4V5JD2syQVoj8Jija_Y2VJBDcjN3maw")
+from dotenv import load_dotenv
+
+load_dotenv()  # loads the .env file
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 
 def generate_sentence(predicted_words):
     """Takes a list of predicted words and generates a meaningful sentence using Gemini API"""
