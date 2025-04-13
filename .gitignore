@@ -1,0 +1,13 @@
+models/
+data/videos1_preprocessed
+archived/
+
+yo.py
+test_i3d.py
+test.py
+nate.py
+index.py
+hello.py
+__pycache__/
+.ipynb_checkpoints/
+NLP/
