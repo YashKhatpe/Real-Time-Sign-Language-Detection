@@ -11,3 +11,4 @@ hello.py
 __pycache__/
 .ipynb_checkpoints/
 NLP/
+.env
