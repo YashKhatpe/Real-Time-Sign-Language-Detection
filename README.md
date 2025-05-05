@@ -24,7 +24,7 @@ This system aims to be a comprehensive communication aid and educational tool fo
   
 ## Demo
 
-https://github.com/user-attachments/assets/a0b02caa-66a9-430e-a533-bb0f1db23e6c
+[https://github.com/user-attachments/assets/a0b02caa-66a9-430e-a533-bb0f1db23e6c](https://github.com/user-attachments/assets/007c3b37-ac36-4a16-9627-96e674861f0d)
 
 
 ## System Architecture
