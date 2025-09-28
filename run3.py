@@ -55,6 +55,7 @@ def generate_sentence(predicted_words):
     f"Create one short, meaningful, and grammatically correct sentence in simple English using the following words: {', '.join(predicted_words)}. "
     f"The words should appear in the same order in the sentence. "
     f"Do not use extra words in the sentence which can be signed seperately, you just form a sentence with the given words by adding correct grammar to it. "
+    f"If the words mentioned above dont have interrogative words then dont add question mark at the end. "
     f"The sentence must be related to healthcare and suitable for real-world communication. "
     f"Add question mark in the end only if it is a question. "
     f"Do not add extra bold or formatting."
@@ -79,6 +80,8 @@ def load_rgb_frames_from_video():
     sentence = ""
     text_count = 0
     text_count_gen = 0
+    final_sentences = []  # To store all generated sentences
+
     """
     To maintain the continous flow of actions we bring in the the batch size and offest modulo factor.
     the batch size and the offset can be varied.
@@ -87,74 +90,102 @@ def load_rgb_frames_from_video():
     
     while True:
         ret, frame1 = vidcap.read()
-        offset = offset + 1
+        offset += 1
         font = cv2.FONT_HERSHEY_TRIPLEX
-        
-        if ret == True:
-            
+
+        if ret:
             w, h, c = frame1.shape
             sc = 224 / w
             sx = 224 / h
             frame = cv2.resize(frame1, dsize=(0, 0), fx=sx, fy=sc)
-            frame1 = cv2.resize(frame1, dsize = (1280,720))
-    
+            frame1 = cv2.resize(frame1, dsize=(1280, 720))
+
             frame = (frame / 255.) * 2 - 1
-            
+
             if offset > batch:
                 frames.pop(0)
                 frames.append(frame)
-                
+
                 if offset % 20 == 0:
-                    text = run_on_tensor(torch.from_numpy((np.asarray(frames, dtype=np.float32)).transpose([3, 0, 1, 2])))
-                    if text != " " and text != 'insurance':
+                    tensor_input = torch.from_numpy(np.asarray(frames, dtype=np.float32).transpose([3, 0, 1, 2]))
+                    text = run_on_tensor(tensor_input)
+
+                    if text != " " and text not in ['insurance', 'stop']:
                         text_count += 1
                         text_count_gen += 1
-                        
+
                         if text != "yes":
                             if not text_list or text_list[-1] != text:
                                 text_list.append(text)
-                                sentence = " ".join(text_list)
-                        
-                        # Using Gemini for sentence generation
+
+                        # Generate sentence on "yes"
                         if text_count_gen > 2 and text == 'yes':
                             sentence = generate_sentence(text_list)
                             print(sentence)
+                            final_sentences.append(sentence)
+                            text_list = []
                             text_count_gen = 0
-                            
-                            
-                
-                cv2.putText(frame1, sentence, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+                # Display either live words or final sentence
+                # Display current words before sentence is generated
+                y_start = 50
+                line_spacing = 40
+
+                if text_list:
+                    current_words = " ".join(text_list)
+                    cv2.putText(frame1, current_words, (30, y_start), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    y_start += line_spacing  # move down for next lines
+
+                # Display each sentence on a new line
+                for idx, s in enumerate(final_sentences[-10:]):  # Limit to last 10 sentences
+                    y_position = y_start + idx * line_spacing
+                    cv2.putText(frame1, s, (30, y_position), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
                 cv2.imshow('frame', frame1)
+
 
             else:
                 frames.append(frame)
                 if offset == batch:
-                    text = run_on_tensor(torch.from_numpy((np.asarray(frames, dtype=np.float32)).transpose([3, 0, 1, 2])))
+                    tensor_input = torch.from_numpy(np.asarray(frames, dtype=np.float32).transpose([3, 0, 1, 2]))
+                    text = run_on_tensor(tensor_input)
+
                     if text != " ":
                         text_count += 1
                         text_count_gen += 1
-                        
+
                         if not text_list or text_list[-1] != text:
                             text_list.append(text)
-                            sentence = " ".join(text_list)
-                        
-                        # Using Gemini for sentence generation
+
                         if text_count_gen > 2 and text == 'yes':
                             sentence = generate_sentence(text_list)
                             print(sentence)
+                            final_sentences.append(sentence)
+                            text_list = []
                             text_count_gen = 0
-                                
-                        
-                        cv2.putText(frame1, sentence, (120, 520), font, 0.9, (0, 255, 255), 2, cv2.LINE_4)
-                
-        
+
+                    # Display current words before sentence is generated
+                    y_start = 50
+                    line_spacing = 40
+
+                    if text_list:
+                        current_words = " ".join(text_list)
+                        cv2.putText(frame1, current_words, (30, y_start), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        y_start += line_spacing  # move down for next lines
+
+                    # Display each sentence on a new line
+                    for idx, s in enumerate(final_sentences[-10:]):  # Limit to last 10 sentences
+                        y_position = y_start + idx * line_spacing
+                        cv2.putText(frame1, s, (30, y_position), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+                    cv2.imshow('frame', frame1)
+
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-            
         else:
             break
-    
-            
+ 
     vidcap.release()
     cv2.destroyAllWindows()
     
